@@ -10,12 +10,9 @@ debug = DebugToolbarExtension(app)
 
 responses = []
 
-
-# DOC STRINGS!!!
-
-
 @app.get("/")
 def get_root():
+    """returns survey start page with survey instruction"""
 
     title = survey.title
     instructions = survey.instructions
@@ -25,11 +22,13 @@ def get_root():
 
 @app.post("/begin")
 def post_begin():
+    """redirect to the question number 0"""
 
     return redirect("/questions/0")
 
 @app.get("/questions/<question_num>")
 def get_questions(question_num):
+    """returns question page for the given question number"""
 
     question = survey.questions[int(question_num)]
     return render_template("question.html", question=question)
@@ -37,6 +36,19 @@ def get_questions(question_num):
 
 @app.post("/answer")
 def post_answer():
-
+    """appends user response to responses and redirect to next question 
+    or completion page"""
+    
     responses.append(request.form.get("answer"))
+    
+    if(len(responses) >= len(survey.questions)):
+        return redirect("/completion")
+    
     return redirect(f"/questions/{len(responses)}") # this is awful
+
+@app.get("/completion")
+def thank_you():
+    """renders completion page with questions and responses"""
+
+    return render_template("completion.html", questions = survey.questions,
+                           responses=responses )
