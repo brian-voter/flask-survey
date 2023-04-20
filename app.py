@@ -28,18 +28,22 @@ def post_begin():
 
 @app.get("/questions/<int:question_num>")
 def get_question(question_num):
-    """returns question page for the given question number"""
+    """If survey not yet completed, returns question page for the given question
+    number, or redirects to the correct question page.
+
+    If survey is already complete, redirect to /completion
+    """
 
     num_answered = len(session.get("responses", []))
 
     # user already completed all questions
-    if num_answered >= len(survey.questions):
+    if num_answered >= TOTAL_QUESTIONS:
         flash("You already completed this survey.")
         return redirect("/completion")
 
     # user tried to go to the wrong question page, redirect to the next question
     if question_num != num_answered:
-        flash("Redirecting from invalid question number")
+        flash("Redirected from invalid question number")
         return redirect(f"/questions/{num_answered}")
 
     # user is requesting their next question, so we render it
@@ -56,14 +60,24 @@ def post_answer():
     responses.append(request.form.get("answer"))
     session["responses"] = responses
 
-    if(len(responses) >= len(survey.questions)):
+    num_answered = len(responses)
+
+    if(num_answered >= TOTAL_QUESTIONS):
         return redirect("/completion")
 
-    return redirect(f"/questions/{len(responses)}")
+    return redirect(f"/questions/{num_answered}")
 
 @app.get("/completion")
 def thank_you():
-    """renders completion page with questions and responses"""
+    """renders completion page with questions and responses,
+    or if survey is incomplete, redirects to next question"""
+
+    num_answered = len(session.get("responses", []))
+
+    # user has not completed the survey, redirect to the next question
+    if num_answered != TOTAL_QUESTIONS:
+        flash("Survey incomplete, redirected to next question.")
+        return redirect(f"/questions/{num_answered}")
 
     return render_template("completion.html", questions = survey.questions,
                            responses=session.get("responses"))
