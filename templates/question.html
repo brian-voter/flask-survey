@@ -6,13 +6,15 @@
   <form action="/answer" method="POST">
 
       <!-- you should have one item like this for every choice -->
+      {% for choice in question.choices %}
       <p>
         <input
             type="radio"
             name="answer"
-            value="value-goes-here">
-        choice-goes-here
+            value="{{choice}}">
+            {{choice}}
       </p>
+      {% endfor %}
 
     <button>Continue</button>
   </form>
