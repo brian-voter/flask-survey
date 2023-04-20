@@ -34,10 +34,12 @@ def get_question(question_num):
 
     # user already completed all questions
     if num_answered >= len(survey.questions):
+        flash("You already completed this survey.")
         return redirect("/completion")
 
     # user tried to go to the wrong question page, redirect to the next question
     if question_num != num_answered:
+        flash("Redirecting from invalid question number")
         return redirect(f"/questions/{num_answered}")
 
     # user is requesting their next question, so we render it

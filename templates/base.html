@@ -8,6 +8,14 @@
 </head>
 <body>
 
+  <div id="flashMessagesContainer" style="background-color: gold;">
+  {% for flash_msg in get_flashed_messages() %}
+  <p>
+  {{flash_msg}}
+  </p>
+  {% endfor %}
+  </div>
+
 {% block content %}
 {% endblock %}
 
