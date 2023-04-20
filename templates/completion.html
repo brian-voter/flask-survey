@@ -5,7 +5,7 @@
   <h1>Thanks for completing this survey!</h1>
   <ol>
   {% for question in questions %}
-  <li><b>{{question.prompt}}</b> {{responses[loop.index]}}</li>
+  <li><b>{{question.prompt}}</b> {{responses[loop.index - 1]}}</li>
   {% endfor %}
 </ol>
 {% endblock %}
