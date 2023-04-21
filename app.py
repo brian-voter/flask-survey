@@ -9,20 +9,21 @@ app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 debug = DebugToolbarExtension(app)
 
 TOTAL_QUESTIONS = len(survey.questions)
+SESSION_RESPONSES_KEY = "responses"
+SURVEY_HOMEPAGE_URL = "/"
 
 @app.get("/")
-def get_root():
+def get_homepage():
     """returns survey start page with survey instruction"""
 
-    title = survey.title
-    instructions = survey.instructions
-
-    return render_template("survey_start.html", survey_title=title,
-                           survey_instructions=instructions)
+    return render_template("survey_start.html", survey=survey)
 
 @app.post("/begin")
 def post_begin():
     """redirect to the question number 0"""
+
+    # init responses list in session
+    get_responses_or_init()
 
     return redirect("/questions/0")
 
@@ -34,7 +35,11 @@ def get_question(question_num):
     If survey is already complete, redirect to /completion
     """
 
-    num_answered = len(session.get("responses", []))
+    responses = get_responses_or_init()
+    if responses is None:
+        return redirect(SURVEY_HOMEPAGE_URL)
+
+    num_answered = len(responses)
 
     # user already completed all questions
     if num_answered >= TOTAL_QUESTIONS:
@@ -56,9 +61,12 @@ def post_answer():
     """appends user response to responses and redirect to next question
     or completion page"""
 
-    responses = session.get("responses", [])
+    responses = get_responses_or_init()
+    if responses is None:
+        return redirect(SURVEY_HOMEPAGE_URL)
+
     responses.append(request.form.get("answer"))
-    session["responses"] = responses
+    session[SESSION_RESPONSES_KEY] = responses
 
     num_answered = len(responses)
 
@@ -68,11 +76,15 @@ def post_answer():
     return redirect(f"/questions/{num_answered}")
 
 @app.get("/completion")
-def thank_you():
+def show_completion_page():
     """renders completion page with questions and responses,
     or if survey is incomplete, redirects to next question"""
 
-    num_answered = len(session.get("responses", []))
+    responses = get_responses_or_init()
+    if responses is None:
+        return redirect(SURVEY_HOMEPAGE_URL)
+
+    num_answered = len(responses)
 
     # user has not completed the survey, redirect to the next question
     if num_answered != TOTAL_QUESTIONS:
@@ -80,4 +92,16 @@ def thank_you():
         return redirect(f"/questions/{num_answered}")
 
     return render_template("completion.html", questions = survey.questions,
-                           responses=session.get("responses"))
+                           responses=session.get(SESSION_RESPONSES_KEY))
+
+def get_responses_or_init():
+    """Returns the responses from the session,
+    or initializes it to [] and returns None"""
+
+    responses = session.get(SESSION_RESPONSES_KEY)
+
+    if responses is None:
+        session[SESSION_RESPONSES_KEY] = []
+        return None
+
+    return responses
